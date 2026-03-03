@@ -130,6 +130,14 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_course_id_fkey";
+            columns: ["course_id"];
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       task_events: {
         Row: {
@@ -180,6 +188,14 @@ export interface Database {
           changes_summary?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "task_events_task_id_fkey";
+            columns: ["task_id"];
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       courses: {
         Row: {
@@ -221,6 +237,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       daily_logs: {
         Row: {
@@ -256,6 +273,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: {
@@ -306,12 +324,23 @@ export interface Database {
           on_time: boolean;
           risk_score: number;
         };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_course_id_fkey";
+            columns: ["course_id"];
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Functions: {
       [_ in never]: never;
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };

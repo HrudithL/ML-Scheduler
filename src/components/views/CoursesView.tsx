@@ -106,7 +106,7 @@ export function CoursesView() {
 
       if (fetchError) throw fetchError;
 
-      setCourses(data || []);
+      setCourses((data || []) as Course[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch courses");
       console.error("Error fetching courses:", err);
