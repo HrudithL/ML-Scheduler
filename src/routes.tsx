@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { LoginPage } from "./components/auth/LoginPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { GoogleCallbackPage } from "./components/auth/GoogleCallbackPage";
 import { MainLayout } from "./components/layout/MainLayout";
 import { TodayView } from "./components/views/TodayView";
 import { InboxView } from "./components/views/InboxView";
@@ -10,6 +11,7 @@ import { CompletedView } from "./components/views/CompletedView";
 import { CoursesView } from "./components/views/CoursesView";
 import { DailyLogView } from "./components/views/DailyLogView";
 import { DataExportView } from "./components/views/DataExportView";
+import { SettingsView } from "./components/views/SettingsView";
 import { PrivacyPolicyPage } from "./components/views/PrivacyPolicyPage";
 import { TermsOfServicePage } from "./components/views/TermsOfServicePage";
 import { LandingPage } from "./components/views/LandingPage";
@@ -22,6 +24,16 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsOfServicePage />} />
+
+      {/* Google OAuth callback - protected (user must be logged in) */}
+      <Route
+        path="/auth/google/callback"
+        element={
+          <ProtectedRoute>
+            <GoogleCallbackPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protected app routes */}
       <Route
@@ -39,6 +51,7 @@ export function AppRoutes() {
         <Route path="courses" element={<CoursesView />} />
         <Route path="daily-log" element={<DailyLogView />} />
         <Route path="export" element={<DataExportView />} />
+        <Route path="settings" element={<SettingsView />} />
       </Route>
     </Routes>
   );

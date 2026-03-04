@@ -48,6 +48,7 @@ export function MainLayout() {
     { value: "/courses", label: "Courses" },
     { value: "/daily-log", label: "Daily Log" },
     { value: "/export", label: "Export" },
+    { value: "/settings", label: "Settings" },
   ];
 
   return (

@@ -20,6 +20,10 @@ export type DailyLogUpdate =
 
 export type TaskEnriched = Database["public"]["Views"]["tasks_enriched"]["Row"];
 
+export type GoogleToken = Database["public"]["Tables"]["google_tokens"]["Row"];
+export type GoogleSyncMapping =
+  Database["public"]["Tables"]["google_sync_mappings"]["Row"];
+
 export type TaskState = Task["state"];
 export type TaskCategory = NonNullable<Task["category"]>;
 export type TaskType = NonNullable<Task["task_type"]>;

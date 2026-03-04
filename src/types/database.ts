@@ -275,6 +275,88 @@ export interface Database {
         };
         Relationships: [];
       };
+      google_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          access_token: string;
+          refresh_token: string;
+          expires_at: string;
+          scopes: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          access_token: string;
+          refresh_token: string;
+          expires_at: string;
+          scopes?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          access_token?: string;
+          refresh_token?: string;
+          expires_at?: string;
+          scopes?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      google_sync_mappings: {
+        Row: {
+          id: string;
+          user_id: string;
+          task_id: string;
+          google_calendar_event_id: string | null;
+          google_task_id: string | null;
+          google_task_list_id: string | null;
+          last_synced_at: string | null;
+          sync_status: "pending" | "synced" | "error";
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          task_id: string;
+          google_calendar_event_id?: string | null;
+          google_task_id?: string | null;
+          google_task_list_id?: string | null;
+          last_synced_at?: string | null;
+          sync_status?: "pending" | "synced" | "error";
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          task_id?: string;
+          google_calendar_event_id?: string | null;
+          google_task_id?: string | null;
+          google_task_list_id?: string | null;
+          last_synced_at?: string | null;
+          sync_status?: "pending" | "synced" | "error";
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "google_sync_mappings_task_id_fkey";
+            columns: ["task_id"];
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       tasks_enriched: {

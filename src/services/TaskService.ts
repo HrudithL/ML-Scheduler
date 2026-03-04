@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { googleCalendarService } from "@/services/GoogleCalendarService";
 import type {
   Task,
   TaskInsert,
@@ -101,6 +102,9 @@ class TaskService {
         console.error("Failed to log task creation event:", eventError);
       }
 
+      // Sync to Google Calendar & Tasks (fire-and-forget)
+      googleCalendarService.syncTask(task.id).catch(() => {});
+
       return task;
     } catch (error) {
       console.error("Error creating task:", error);
@@ -155,6 +159,9 @@ class TaskService {
       if (eventError) {
         console.error("Failed to log task update event:", eventError);
       }
+
+      // Sync to Google Calendar & Tasks (fire-and-forget)
+      googleCalendarService.syncTask(taskId).catch(() => {});
 
       return updatedTask;
     } catch (error) {
@@ -239,6 +246,9 @@ class TaskService {
         console.error("Failed to log task state change event:", eventError);
       }
 
+      // Sync to Google Calendar & Tasks (fire-and-forget)
+      googleCalendarService.syncTask(taskId).catch(() => {});
+
       return updatedTask;
     } catch (error) {
       console.error("Error transitioning task state:", error);
@@ -318,6 +328,9 @@ class TaskService {
         console.error("Failed to log planned block update event:", eventError);
       }
 
+      // Sync to Google Calendar & Tasks (fire-and-forget)
+      googleCalendarService.syncTask(taskId).catch(() => {});
+
       return updatedTask;
     } catch (error) {
       console.error("Error updating planned block:", error);
@@ -377,6 +390,9 @@ class TaskService {
         console.error("Failed to log due date update event:", eventError);
       }
 
+      // Sync to Google Calendar & Tasks (fire-and-forget)
+      googleCalendarService.syncTask(taskId).catch(() => {});
+
       return updatedTask;
     } catch (error) {
       console.error("Error updating due date:", error);
@@ -418,6 +434,9 @@ class TaskService {
       if (eventError) {
         console.error("Failed to log task deletion event:", eventError);
       }
+
+      // Delete synced Google Calendar event and Task first (fire-and-forget)
+      await googleCalendarService.deleteSyncedTask(taskId).catch(() => {});
 
       // Delete the task (will cascade delete all events including the one we just created)
       const { error: deleteError } = await supabase
