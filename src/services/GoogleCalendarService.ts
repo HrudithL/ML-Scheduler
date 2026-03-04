@@ -71,14 +71,12 @@ class GoogleCalendarService {
     const redirectUri = `${window.location.origin}/auth/google/callback`;
 
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-auth?action=auth_url`,
+      `${SUPABASE_URL}/functions/v1/google-auth?action=auth_url&redirect_uri=${encodeURIComponent(redirectUri)}`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: auth,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ redirect_uri: redirectUri }),
       },
     );
 
@@ -86,7 +84,7 @@ class GoogleCalendarService {
     if (data.error) throw new Error(data.error);
 
     // Redirect the user to Google consent screen
-    window.location.href = data.auth_url;
+    window.location.href = data.url;
   }
 
   /**
