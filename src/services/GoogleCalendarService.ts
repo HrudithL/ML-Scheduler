@@ -71,9 +71,7 @@ class GoogleCalendarService {
     });
 
     if (!data?.url) {
-      throw new Error(
-        data?.error || "Failed to get Google authorization URL",
-      );
+      throw new Error(data?.error || "Failed to get Google authorization URL");
     }
 
     // Redirect the user to Google consent screen
