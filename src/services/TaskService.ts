@@ -246,8 +246,12 @@ class TaskService {
         console.error("Failed to log task state change event:", eventError);
       }
 
-      // Sync to Google Calendar & Tasks (fire-and-forget)
-      googleCalendarService.syncTask(taskId).catch(() => {});
+      // If task is completed, remove from Google Tasks; otherwise sync
+      if (newState === "done") {
+        googleCalendarService.removeCompletedTask(taskId).catch(() => {});
+      } else {
+        googleCalendarService.syncTask(taskId).catch(() => {});
+      }
 
       return updatedTask;
     } catch (error) {

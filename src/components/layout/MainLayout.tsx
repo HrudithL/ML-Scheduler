@@ -47,6 +47,7 @@ export function MainLayout() {
     { value: "/completed", label: "Completed" },
     { value: "/courses", label: "Courses" },
     { value: "/daily-log", label: "Daily Log" },
+    { value: "/calendar", label: "Calendar" },
     { value: "/export", label: "Export" },
     { value: "/settings", label: "Settings" },
   ];

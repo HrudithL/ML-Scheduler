@@ -168,6 +168,115 @@ class GoogleCalendarService {
     if (data?.error) throw new Error(data.error);
     return { changes: data.changes };
   }
+
+  /**
+   * Fetch Google Calendar events for a given time range.
+   * Returns raw calendar events to display alongside tasks.
+   */
+  async fetchCalendarEvents(
+    timeMin: string,
+    timeMax: string,
+  ): Promise<CalendarEvent[]> {
+    if (!this._connected) {
+      const connected = await this.isConnected();
+      if (!connected) return [];
+    }
+
+    try {
+      const data = await this.invoke("google-sync", {
+        action: "fetch_calendar_events",
+        time_min: timeMin,
+        time_max: timeMax,
+      });
+
+      if (data?.error) {
+        console.error("Error fetching calendar events:", data.error);
+        return [];
+      }
+
+      return (data?.events ?? []).map((e: any) => ({
+        id: e.id,
+        title: e.summary ?? "(No Title)",
+        start: e.start?.dateTime ?? e.start?.date ?? "",
+        end: e.end?.dateTime ?? e.end?.date ?? "",
+        allDay: !e.start?.dateTime,
+        description: e.description ?? "",
+        location: e.location ?? "",
+        htmlLink: e.htmlLink ?? "",
+        isGoogleEvent: true,
+      }));
+    } catch (err) {
+      console.error("Failed to fetch Google Calendar events:", err);
+      return [];
+    }
+  }
+
+  /**
+   * Sync a task to Google Calendar with specific date/time and reminders.
+   * Sets reminders for morning of due date (8 AM) and 30 min before due time.
+   */
+  async syncTaskWithReminders(
+    taskId: string,
+    startAt: string,
+    endAt: string,
+    dueAt: string | null,
+  ): Promise<void> {
+    if (!this._connected) {
+      const connected = await this.isConnected();
+      if (!connected) return;
+    }
+
+    try {
+      const data = await this.invoke("google-sync", {
+        action: "sync_task_with_reminders",
+        task_id: taskId,
+        start_at: startAt,
+        end_at: endAt,
+        due_at: dueAt,
+        reminders: {
+          morning_of_due: true, // 8 AM on due date
+          before_due_minutes: 30, // 30 minutes before
+        },
+      });
+      if (data?.error) {
+        console.error("Google sync with reminders error:", data.error);
+      }
+    } catch (err) {
+      console.error("Failed to sync task with reminders:", err);
+    }
+  }
+
+  /**
+   * Remove a completed task from Google Tasks (but keep calendar event for history)
+   */
+  async removeCompletedTask(taskId: string): Promise<void> {
+    if (!this._connected) {
+      const connected = await this.isConnected();
+      if (!connected) return;
+    }
+
+    try {
+      await this.invoke("google-sync", {
+        action: "complete_task",
+        task_id: taskId,
+      });
+    } catch (err) {
+      console.error("Failed to remove completed task from Google:", err);
+    }
+  }
+}
+
+/** Represents a Google Calendar event for display */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  description: string;
+  location: string;
+  htmlLink: string;
+  isGoogleEvent: boolean;
 }
 
 // Export singleton instance

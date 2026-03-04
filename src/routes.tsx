@@ -12,6 +12,7 @@ import { CoursesView } from "./components/views/CoursesView";
 import { DailyLogView } from "./components/views/DailyLogView";
 import { DataExportView } from "./components/views/DataExportView";
 import { SettingsView } from "./components/views/SettingsView";
+import { CalendarView } from "./components/views/CalendarView";
 import { PrivacyPolicyPage } from "./components/views/PrivacyPolicyPage";
 import { TermsOfServicePage } from "./components/views/TermsOfServicePage";
 import { LandingPage } from "./components/views/LandingPage";
@@ -50,6 +51,7 @@ export function AppRoutes() {
         <Route path="completed" element={<CompletedView />} />
         <Route path="courses" element={<CoursesView />} />
         <Route path="daily-log" element={<DailyLogView />} />
+        <Route path="calendar" element={<CalendarView />} />
         <Route path="export" element={<DataExportView />} />
         <Route path="settings" element={<SettingsView />} />
       </Route>
