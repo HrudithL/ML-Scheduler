@@ -160,6 +160,7 @@ class GoogleCalendarService {
 
   /**
    * Pull changes from Google Calendar back into local tasks
+   * This is the original method - kept for backward compatibility
    */
   async pullChanges(): Promise<{ changes: any[] }> {
     const data = await this.invoke("google-sync", {
@@ -167,6 +168,55 @@ class GoogleCalendarService {
     });
     if (data?.error) throw new Error(data.error);
     return { changes: data.changes };
+  }
+
+  /**
+   * Enhanced 2-way sync: Pull changes from Google Calendar and apply them locally
+   * Returns information about what was synced and any conflicts
+   */
+  async syncFromGoogle(): Promise<SyncFromGoogleResult> {
+    if (!this._connected) {
+      const connected = await this.isConnected();
+      if (!connected) {
+        return { 
+          success: false, 
+          updatedTasks: [], 
+          conflicts: [], 
+          error: "Not connected to Google Calendar" 
+        };
+      }
+    }
+
+    try {
+      const data = await this.invoke("google-sync", {
+        action: "sync_from_google",
+      });
+
+      if (data?.error) {
+        return { 
+          success: false, 
+          updatedTasks: [], 
+          conflicts: [], 
+          error: data.error 
+        };
+      }
+
+      return {
+        success: true,
+        updatedTasks: data.updated_tasks || [],
+        conflicts: data.conflicts || [],
+        deletedTasks: data.deleted_tasks || [],
+        newEvents: data.new_events || [],
+      };
+    } catch (err) {
+      console.error("Failed to sync from Google:", err);
+      return { 
+        success: false, 
+        updatedTasks: [], 
+        conflicts: [], 
+        error: String(err) 
+      };
+    }
   }
 
   /**
@@ -277,6 +327,29 @@ export interface CalendarEvent {
   location: string;
   htmlLink: string;
   isGoogleEvent: boolean;
+}
+
+/** Result of syncing from Google Calendar back to local */
+export interface SyncFromGoogleResult {
+  success: boolean;
+  updatedTasks: Array<{
+    taskId: string;
+    changes: {
+      planned_start_at?: string;
+      planned_end_at?: string;
+      title?: string;
+      description?: string;
+    };
+  }>;
+  conflicts: Array<{
+    taskId: string;
+    localValue: any;
+    googleValue: any;
+    field: string;
+  }>;
+  deletedTasks?: string[];
+  newEvents?: any[];
+  error?: string;
 }
 
 // Export singleton instance

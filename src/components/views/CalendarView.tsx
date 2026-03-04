@@ -8,7 +8,7 @@ import { format, addMinutes } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { taskService } from "@/services/TaskService";
 import { googleCalendarService } from "@/services/GoogleCalendarService";
-import type { CalendarEvent } from "@/services/GoogleCalendarService";
+import type { CalendarEvent, SyncFromGoogleResult } from "@/services/GoogleCalendarService";
 import type { TaskEnriched, Course } from "@/types/models";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ import {
   Link2,
   Unlink,
   Search,
+  Zap,
+  ZapOff,
 } from "lucide-react";
 
 // Priority colors for task events on calendar
@@ -43,6 +45,9 @@ export function CalendarView() {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [syncConflicts, setSyncConflicts] = useState<Array<any>>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [calendarDateRange, setCalendarDateRange] = useState<{ start: Date; end: Date } | null>(null);
 
@@ -67,6 +72,25 @@ export function CalendarView() {
       fetchGoogleEvents(calendarDateRange.start, calendarDateRange.end);
     }
   }, [calendarDateRange, isConnected]);
+
+  // Automatic 2-way sync polling (every 30 seconds when connected and enabled)
+  useEffect(() => {
+    if (!isConnected || !autoSyncEnabled) return;
+
+    const syncInterval = setInterval(async () => {
+      await performAutoSync();
+    }, 30000); // 30 seconds
+
+    // Also do an initial sync after 2 seconds
+    const initialSync = setTimeout(() => {
+      performAutoSync();
+    }, 2000);
+
+    return () => {
+      clearInterval(syncInterval);
+      clearTimeout(initialSync);
+    };
+  }, [isConnected, autoSyncEnabled]);
 
   async function loadAll() {
     setLoading(true);
@@ -116,6 +140,97 @@ export function CalendarView() {
       setGoogleEvents(events);
     } catch (err) {
       console.error("Failed to fetch Google Calendar events:", err);
+    }
+  }
+
+  /**
+   * Perform automatic 2-way sync from Google Calendar
+   */
+  async function performAutoSync() {
+    if (syncing) return; // Skip if already syncing
+
+    try {
+      const result = await googleCalendarService.syncFromGoogle();
+      
+      if (result.success) {
+        setLastSyncTime(new Date());
+
+        // Apply updates from Google to local tasks
+        if (result.updatedTasks.length > 0) {
+          await applyGoogleUpdates(result.updatedTasks);
+          
+          // Show toast only if there were actual changes
+          if (result.updatedTasks.length > 0) {
+            toast({
+              title: "Synced from Google",
+              description: `Updated ${result.updatedTasks.length} task${result.updatedTasks.length > 1 ? "s" : ""} from Google Calendar`,
+            });
+          }
+        }
+
+        // Handle conflicts
+        if (result.conflicts && result.conflicts.length > 0) {
+          setSyncConflicts(result.conflicts);
+          toast({
+            title: "Sync conflicts detected",
+            description: `${result.conflicts.length} conflict${result.conflicts.length > 1 ? "s" : ""} found. Google changes were applied.`,
+            variant: "destructive",
+          });
+        }
+
+        // Refresh tasks to show updates
+        await fetchTasks();
+
+        // Refresh Google events
+        if (calendarDateRange) {
+          await fetchGoogleEvents(calendarDateRange.start, calendarDateRange.end);
+        }
+      }
+    } catch (err) {
+      console.error("Auto-sync error:", err);
+      // Silent failure for auto-sync - don't spam user with errors
+    }
+  }
+
+  /**
+   * Apply updates from Google Calendar to local tasks
+   */
+  async function applyGoogleUpdates(updates: SyncFromGoogleResult["updatedTasks"]) {
+    for (const update of updates) {
+      try {
+        const task = tasks.find(t => t.id === update.taskId);
+        if (!task) continue;
+
+        // Check if there are actual changes to prevent unnecessary updates
+        const hasChanges = 
+          (update.changes.planned_start_at && update.changes.planned_start_at !== task.planned_start_at) ||
+          (update.changes.planned_end_at && update.changes.planned_end_at !== task.planned_end_at) ||
+          (update.changes.title && update.changes.title !== task.title) ||
+          (update.changes.description && update.changes.description !== task.description);
+
+        if (!hasChanges) continue;
+
+        // Apply the changes
+        const patchData: any = {};
+        
+        if (update.changes.planned_start_at || update.changes.planned_end_at) {
+          // Update planned block if time changed
+          await taskService.updatePlannedBlock(
+            update.taskId,
+            update.changes.planned_start_at ? new Date(update.changes.planned_start_at) : null,
+            update.changes.planned_end_at ? new Date(update.changes.planned_end_at) : null,
+          );
+        }
+
+        if (update.changes.title) patchData.title = update.changes.title;
+        if (update.changes.description !== undefined) patchData.description = update.changes.description;
+
+        if (Object.keys(patchData).length > 0) {
+          await taskService.updateTask(update.taskId, patchData);
+        }
+      } catch (err) {
+        console.error(`Failed to apply update for task ${update.taskId}:`, err);
+      }
     }
   }
 
@@ -340,12 +455,30 @@ export function CalendarView() {
 
     setSyncing(true);
     try {
+      // First push all local tasks to Google
       await googleCalendarService.syncAll();
+      
+      // Then pull changes from Google
+      const result = await googleCalendarService.syncFromGoogle();
+      
+      if (result.success && result.updatedTasks.length > 0) {
+        await applyGoogleUpdates(result.updatedTasks);
+      }
+
+      if (result.conflicts && result.conflicts.length > 0) {
+        setSyncConflicts(result.conflicts);
+      }
+
       await fetchTasks();
       if (calendarDateRange) {
         await fetchGoogleEvents(calendarDateRange.start, calendarDateRange.end);
       }
-      toast({ title: "Sync complete", description: "All tasks synced with Google Calendar" });
+      
+      setLastSyncTime(new Date());
+      toast({ 
+        title: "Sync complete", 
+        description: `All tasks synced with Google Calendar${result.updatedTasks.length > 0 ? ` (${result.updatedTasks.length} updated from Google)` : ""}` 
+      });
     } catch (err) {
       console.error("Sync error:", err);
       toast({ title: "Sync failed", description: String(err), variant: "destructive" });
@@ -489,6 +622,20 @@ export function CalendarView() {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
+                  onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+                  disabled={!isConnected}
+                  title={autoSyncEnabled ? "Disable auto-sync" : "Enable auto-sync"}
+                >
+                  {autoSyncEnabled ? (
+                    <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                  ) : (
+                    <ZapOff className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
                   onClick={handleFullSync}
                   disabled={syncing || !isConnected}
                   title="Sync with Google Calendar"
@@ -501,6 +648,18 @@ export function CalendarView() {
                 </Button>
               </div>
             </div>
+            {lastSyncTime && isConnected && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Last synced: {format(lastSyncTime, "h:mm:ss a")}
+                {autoSyncEnabled && " • Auto-sync enabled"}
+              </p>
+            )}
+            {syncConflicts.length > 0 && (
+              <div className="mt-2 text-[10px] text-amber-600 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                {syncConflicts.length} conflict{syncConflicts.length > 1 ? "s" : ""} resolved (Google changes applied)
+              </div>
+            )}
           </CardHeader>
         </Card>
 
