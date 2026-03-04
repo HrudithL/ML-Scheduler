@@ -3,12 +3,19 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
-import type { EventDropArg, EventClickArg, DateSelectArg } from "@fullcalendar/core";
+import type {
+  EventDropArg,
+  EventClickArg,
+  DateSelectArg,
+} from "@fullcalendar/core";
 import { format, addMinutes } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { taskService } from "@/services/TaskService";
 import { googleCalendarService } from "@/services/GoogleCalendarService";
-import type { CalendarEvent, SyncFromGoogleResult } from "@/services/GoogleCalendarService";
+import type {
+  CalendarEvent,
+  SyncFromGoogleResult,
+} from "@/services/GoogleCalendarService";
 import type { TaskEnriched, Course } from "@/types/models";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +38,10 @@ import {
 } from "lucide-react";
 
 // Priority colors for task events on calendar
-const PRIORITY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
+const PRIORITY_COLORS: Record<
+  string,
+  { bg: string; border: string; text: string }
+> = {
   critical: { bg: "#fecaca", border: "#ef4444", text: "#991b1b" },
   high: { bg: "#fed7aa", border: "#f97316", text: "#9a3412" },
   medium: { bg: "#fef08a", border: "#eab308", text: "#854d0e" },
@@ -49,7 +59,10 @@ export function CalendarView() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [syncConflicts, setSyncConflicts] = useState<Array<any>>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [calendarDateRange, setCalendarDateRange] = useState<{ start: Date; end: Date } | null>(null);
+  const [calendarDateRange, setCalendarDateRange] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   const calendarRef = useRef<FullCalendar>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
@@ -95,7 +108,11 @@ export function CalendarView() {
   async function loadAll() {
     setLoading(true);
     try {
-      await Promise.all([fetchTasks(), fetchCourses(), checkGoogleConnection()]);
+      await Promise.all([
+        fetchTasks(),
+        fetchCourses(),
+        checkGoogleConnection(),
+      ]);
     } finally {
       setLoading(false);
     }
@@ -110,7 +127,11 @@ export function CalendarView() {
 
     if (error) {
       console.error("Error fetching tasks:", error);
-      toast({ title: "Error", description: "Failed to load tasks", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to load tasks",
+        variant: "destructive",
+      });
       return;
     }
     setTasks((data as TaskEnriched[]) ?? []);
@@ -151,14 +172,14 @@ export function CalendarView() {
 
     try {
       const result = await googleCalendarService.syncFromGoogle();
-      
+
       if (result.success) {
         setLastSyncTime(new Date());
 
         // Apply updates from Google to local tasks
         if (result.updatedTasks.length > 0) {
           await applyGoogleUpdates(result.updatedTasks);
-          
+
           // Show toast only if there were actual changes
           if (result.updatedTasks.length > 0) {
             toast({
@@ -183,7 +204,10 @@ export function CalendarView() {
 
         // Refresh Google events
         if (calendarDateRange) {
-          await fetchGoogleEvents(calendarDateRange.start, calendarDateRange.end);
+          await fetchGoogleEvents(
+            calendarDateRange.start,
+            calendarDateRange.end,
+          );
         }
       }
     } catch (err) {
@@ -195,35 +219,45 @@ export function CalendarView() {
   /**
    * Apply updates from Google Calendar to local tasks
    */
-  async function applyGoogleUpdates(updates: SyncFromGoogleResult["updatedTasks"]) {
+  async function applyGoogleUpdates(
+    updates: SyncFromGoogleResult["updatedTasks"],
+  ) {
     for (const update of updates) {
       try {
-        const task = tasks.find(t => t.id === update.taskId);
+        const task = tasks.find((t) => t.id === update.taskId);
         if (!task) continue;
 
         // Check if there are actual changes to prevent unnecessary updates
-        const hasChanges = 
-          (update.changes.planned_start_at && update.changes.planned_start_at !== task.planned_start_at) ||
-          (update.changes.planned_end_at && update.changes.planned_end_at !== task.planned_end_at) ||
+        const hasChanges =
+          (update.changes.planned_start_at &&
+            update.changes.planned_start_at !== task.planned_start_at) ||
+          (update.changes.planned_end_at &&
+            update.changes.planned_end_at !== task.planned_end_at) ||
           (update.changes.title && update.changes.title !== task.title) ||
-          (update.changes.description && update.changes.description !== task.description);
+          (update.changes.description &&
+            update.changes.description !== task.description);
 
         if (!hasChanges) continue;
 
         // Apply the changes
         const patchData: any = {};
-        
+
         if (update.changes.planned_start_at || update.changes.planned_end_at) {
           // Update planned block if time changed
           await taskService.updatePlannedBlock(
             update.taskId,
-            update.changes.planned_start_at ? new Date(update.changes.planned_start_at) : null,
-            update.changes.planned_end_at ? new Date(update.changes.planned_end_at) : null,
+            update.changes.planned_start_at
+              ? new Date(update.changes.planned_start_at)
+              : null,
+            update.changes.planned_end_at
+              ? new Date(update.changes.planned_end_at)
+              : null,
           );
         }
 
         if (update.changes.title) patchData.title = update.changes.title;
-        if (update.changes.description !== undefined) patchData.description = update.changes.description;
+        if (update.changes.description !== undefined)
+          patchData.description = update.changes.description;
 
         if (Object.keys(patchData).length > 0) {
           await taskService.updateTask(update.taskId, patchData);
@@ -304,7 +338,10 @@ export function CalendarView() {
         await taskService.transitionState(taskId, "planned");
       }
 
-      toast({ title: "Task scheduled", description: `"${info.event.title}" added to calendar` });
+      toast({
+        title: "Task scheduled",
+        description: `"${info.event.title}" added to calendar`,
+      });
 
       // Refresh tasks
       await fetchTasks();
@@ -315,7 +352,11 @@ export function CalendarView() {
       }
     } catch (err) {
       console.error("Error scheduling task:", err);
-      toast({ title: "Error", description: "Failed to schedule task", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to schedule task",
+        variant: "destructive",
+      });
       info.revert();
     }
   }
@@ -349,7 +390,11 @@ export function CalendarView() {
       await fetchTasks();
     } catch (err) {
       console.error("Error rescheduling task:", err);
-      toast({ title: "Error", description: "Failed to reschedule task", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to reschedule task",
+        variant: "destructive",
+      });
       info.revert();
     }
   }
@@ -431,7 +476,10 @@ export function CalendarView() {
         await googleCalendarService.removeCompletedTask(taskId);
       }
 
-      toast({ title: "Task completed", description: "Removed from Google Tasks" });
+      toast({
+        title: "Task completed",
+        description: "Removed from Google Tasks",
+      });
       await fetchTasks();
 
       // Refresh Google events to reflect changes
@@ -440,7 +488,11 @@ export function CalendarView() {
       }
     } catch (err) {
       console.error("Error completing task:", err);
-      toast({ title: "Error", description: "Failed to complete task", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to complete task",
+        variant: "destructive",
+      });
     }
   }
 
@@ -449,7 +501,11 @@ export function CalendarView() {
    */
   async function handleFullSync() {
     if (!isConnected) {
-      toast({ title: "Not connected", description: "Connect Google Calendar in Settings first", variant: "destructive" });
+      toast({
+        title: "Not connected",
+        description: "Connect Google Calendar in Settings first",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -457,10 +513,10 @@ export function CalendarView() {
     try {
       // First push all local tasks to Google
       await googleCalendarService.syncAll();
-      
+
       // Then pull changes from Google
       const result = await googleCalendarService.syncFromGoogle();
-      
+
       if (result.success && result.updatedTasks.length > 0) {
         await applyGoogleUpdates(result.updatedTasks);
       }
@@ -473,15 +529,19 @@ export function CalendarView() {
       if (calendarDateRange) {
         await fetchGoogleEvents(calendarDateRange.start, calendarDateRange.end);
       }
-      
+
       setLastSyncTime(new Date());
-      toast({ 
-        title: "Sync complete", 
-        description: `All tasks synced with Google Calendar${result.updatedTasks.length > 0 ? ` (${result.updatedTasks.length} updated from Google)` : ""}` 
+      toast({
+        title: "Sync complete",
+        description: `All tasks synced with Google Calendar${result.updatedTasks.length > 0 ? ` (${result.updatedTasks.length} updated from Google)` : ""}`,
       });
     } catch (err) {
       console.error("Sync error:", err);
-      toast({ title: "Sync failed", description: String(err), variant: "destructive" });
+      toast({
+        title: "Sync failed",
+        description: String(err),
+        variant: "destructive",
+      });
     } finally {
       setSyncing(false);
     }
@@ -499,13 +559,19 @@ export function CalendarView() {
    */
   function getCalendarEvents() {
     const taskEvents = tasks
-      .filter((t) => t.planned_start_at && t.state !== "done" && t.state !== "dropped")
+      .filter(
+        (t) =>
+          t.planned_start_at && t.state !== "done" && t.state !== "dropped",
+      )
       .map((t) => {
         const priority = t.priority_label || "medium";
         const colors = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
         const estimatedEnd = t.planned_end_at
           ? t.planned_end_at
-          : addMinutes(new Date(t.planned_start_at!), t.estimated_minutes || 60).toISOString();
+          : addMinutes(
+              new Date(t.planned_start_at!),
+              t.estimated_minutes || 60,
+            ).toISOString();
 
         return {
           id: `task-${t.id}`,
@@ -608,12 +674,18 @@ export function CalendarView() {
               </CardTitle>
               <div className="flex items-center gap-1">
                 {isConnected ? (
-                  <Badge variant="outline" className="text-xs gap-1 text-green-600 border-green-300">
+                  <Badge
+                    variant="outline"
+                    className="text-xs gap-1 text-green-600 border-green-300"
+                  >
                     <Link2 className="w-3 h-3" />
                     Connected
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                  <Badge
+                    variant="outline"
+                    className="text-xs gap-1 text-muted-foreground"
+                  >
                     <Unlink className="w-3 h-3" />
                     Not linked
                   </Badge>
@@ -624,7 +696,9 @@ export function CalendarView() {
                   className="h-7 w-7"
                   onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
                   disabled={!isConnected}
-                  title={autoSyncEnabled ? "Disable auto-sync" : "Enable auto-sync"}
+                  title={
+                    autoSyncEnabled ? "Disable auto-sync" : "Enable auto-sync"
+                  }
                 >
                   {autoSyncEnabled ? (
                     <Zap className="w-3.5 h-3.5 text-yellow-500" />
@@ -657,7 +731,9 @@ export function CalendarView() {
             {syncConflicts.length > 0 && (
               <div className="mt-2 text-[10px] text-amber-600 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                {syncConflicts.length} conflict{syncConflicts.length > 1 ? "s" : ""} resolved (Google changes applied)
+                {syncConflicts.length} conflict
+                {syncConflicts.length > 1 ? "s" : ""} resolved (Google changes
+                applied)
               </div>
             )}
           </CardHeader>
@@ -699,11 +775,17 @@ export function CalendarView() {
                   >
                     <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0 opacity-50 group-hover:opacity-100" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{task.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        {task.title}
+                      </p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {task.priority_label && (
                           <Badge
-                            variant={task.priority_label === "critical" ? "destructive" : "outline"}
+                            variant={
+                              task.priority_label === "critical"
+                                ? "destructive"
+                                : "outline"
+                            }
                             className="text-[10px] px-1 py-0 h-4"
                           >
                             {task.priority_label}
@@ -721,10 +803,14 @@ export function CalendarView() {
                         {task.due_at && (
                           <span
                             className={`text-[10px] flex items-center gap-0.5 ${
-                            task.is_overdue ? "text-red-500" : "text-muted-foreground"
+                              task.is_overdue
+                                ? "text-red-500"
+                                : "text-muted-foreground"
                             }`}
                           >
-                            {task.is_overdue && <AlertTriangle className="w-3 h-3" />}
+                            {task.is_overdue && (
+                              <AlertTriangle className="w-3 h-3" />
+                            )}
                             Due {format(new Date(task.due_at), "MMM d")}
                           </span>
                         )}
@@ -754,7 +840,8 @@ export function CalendarView() {
           <Card>
             <CardContent className="py-2 px-3">
               <p className="text-xs text-muted-foreground">
-                {scheduledTasks.length} task{scheduledTasks.length > 1 ? "s" : ""} on calendar
+                {scheduledTasks.length} task
+                {scheduledTasks.length > 1 ? "s" : ""} on calendar
               </p>
             </CardContent>
           </Card>
@@ -809,11 +896,17 @@ function renderEventContent(eventInfo: any) {
   return (
     <div className="px-1 py-0.5 overflow-hidden h-full">
       <div className="flex items-center gap-1">
-        {timeText && <span className="text-[10px] font-medium opacity-75">{timeText}</span>}
+        {timeText && (
+          <span className="text-[10px] font-medium opacity-75">{timeText}</span>
+        )}
       </div>
-      <p className="text-xs font-semibold truncate leading-tight">{event.title}</p>
+      <p className="text-xs font-semibold truncate leading-tight">
+        {event.title}
+      </p>
       {isGoogle && event.extendedProps?.location && (
-        <p className="text-[10px] opacity-75 truncate">{event.extendedProps.location}</p>
+        <p className="text-[10px] opacity-75 truncate">
+          {event.extendedProps.location}
+        </p>
       )}
     </div>
   );

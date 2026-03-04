@@ -178,11 +178,11 @@ class GoogleCalendarService {
     if (!this._connected) {
       const connected = await this.isConnected();
       if (!connected) {
-        return { 
-          success: false, 
-          updatedTasks: [], 
-          conflicts: [], 
-          error: "Not connected to Google Calendar" 
+        return {
+          success: false,
+          updatedTasks: [],
+          conflicts: [],
+          error: "Not connected to Google Calendar",
         };
       }
     }
@@ -193,11 +193,11 @@ class GoogleCalendarService {
       });
 
       if (data?.error) {
-        return { 
-          success: false, 
-          updatedTasks: [], 
-          conflicts: [], 
-          error: data.error 
+        return {
+          success: false,
+          updatedTasks: [],
+          conflicts: [],
+          error: data.error,
         };
       }
 
@@ -210,11 +210,11 @@ class GoogleCalendarService {
       };
     } catch (err) {
       console.error("Failed to sync from Google:", err);
-      return { 
-        success: false, 
-        updatedTasks: [], 
-        conflicts: [], 
-        error: String(err) 
+      return {
+        success: false,
+        updatedTasks: [],
+        conflicts: [],
+        error: String(err),
       };
     }
   }
