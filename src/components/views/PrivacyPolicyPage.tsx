@@ -5,10 +5,7 @@ export function PrivacyPolicyPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-8">
         <div className="mb-6">
-          <Link
-            to="/"
-            className="text-blue-600 hover:text-blue-800 text-sm"
-          >
+          <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm">
             &larr; Back to App
           </Link>
         </div>
@@ -42,8 +39,8 @@ export function PrivacyPolicyPage() {
             </h3>
             <p className="text-gray-700 leading-relaxed">
               When you sign up, we collect your email address through Supabase
-              Authentication. We do not collect passwords directly; authentication
-              is handled securely by Supabase.
+              Authentication. We do not collect passwords directly;
+              authentication is handled securely by Supabase.
             </p>
 
             <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2">
@@ -65,15 +62,17 @@ export function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-6 text-gray-700 space-y-1">
               <li>
-                <strong>Google Calendar Events</strong>{" "}
-                (<code className="text-sm bg-gray-100 px-1 rounded">calendar.events</code>):
-                Used to create, read, update, and delete study session events
+                <strong>Google Calendar Events</strong> (
+                <code className="text-sm bg-gray-100 px-1 rounded">
+                  calendar.events
+                </code>
+                ): Used to create, read, update, and delete study session events
                 that you schedule through the app.
               </li>
               <li>
-                <strong>Google Tasks</strong>{" "}
-                (<code className="text-sm bg-gray-100 px-1 rounded">tasks</code>):
-                Used to create and manage task items with due dates that
+                <strong>Google Tasks</strong> (
+                <code className="text-sm bg-gray-100 px-1 rounded">tasks</code>
+                ): Used to create and manage task items with due dates that
                 correspond to your course deadlines.
               </li>
             </ul>
@@ -89,10 +88,22 @@ export function PrivacyPolicyPage() {
               3. How We Use Your Information
             </h2>
             <ul className="list-disc pl-6 text-gray-700 space-y-1">
-              <li>To provide and maintain the scheduling and task management service</li>
-              <li>To sync your study sessions and deadlines with Google Calendar and Google Tasks</li>
-              <li>To calculate risk scores, due-date alerts, and productivity metrics</li>
-              <li>To enable two-way sync so changes on either platform are reflected in both</li>
+              <li>
+                To provide and maintain the scheduling and task management
+                service
+              </li>
+              <li>
+                To sync your study sessions and deadlines with Google Calendar
+                and Google Tasks
+              </li>
+              <li>
+                To calculate risk scores, due-date alerts, and productivity
+                metrics
+              </li>
+              <li>
+                To enable two-way sync so changes on either platform are
+                reflected in both
+              </li>
             </ul>
             <p className="text-gray-700 leading-relaxed mt-2">
               We do <strong>not</strong> use your data for advertising, sell it
@@ -109,8 +120,8 @@ export function PrivacyPolicyPage() {
               Your data is stored securely using Supabase with Row Level
               Security (RLS) policies, ensuring only you can access your own
               data. Google OAuth tokens are stored locally on your device and
-              are never sent to our servers. All communication is encrypted
-              via HTTPS.
+              are never sent to our servers. All communication is encrypted via
+              HTTPS.
             </p>
           </section>
 
@@ -122,10 +133,20 @@ export function PrivacyPolicyPage() {
               We use the following third-party services:
             </p>
             <ul className="list-disc pl-6 text-gray-700 space-y-1">
-              <li><strong>Supabase</strong> — Authentication and database hosting</li>
-              <li><strong>Google Calendar API</strong> — Calendar event synchronization</li>
-              <li><strong>Google Tasks API</strong> — Task management synchronization</li>
-              <li><strong>Vercel</strong> — Application hosting</li>
+              <li>
+                <strong>Supabase</strong> — Authentication and database hosting
+              </li>
+              <li>
+                <strong>Google Calendar API</strong> — Calendar event
+                synchronization
+              </li>
+              <li>
+                <strong>Google Tasks API</strong> — Task management
+                synchronization
+              </li>
+              <li>
+                <strong>Vercel</strong> — Application hosting
+              </li>
             </ul>
             <p className="text-gray-700 leading-relaxed mt-2">
               Each service has its own privacy policy. We encourage you to
@@ -149,12 +170,17 @@ export function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
               7. Your Rights
             </h2>
-            <p className="text-gray-700 leading-relaxed">You have the right to:</p>
+            <p className="text-gray-700 leading-relaxed">
+              You have the right to:
+            </p>
             <ul className="list-disc pl-6 text-gray-700 space-y-1">
               <li>Access your personal data stored in the app</li>
               <li>Export your data (via the built-in Export feature)</li>
               <li>Request correction or deletion of your data</li>
-              <li>Revoke Google API access at any time through your Google Account settings</li>
+              <li>
+                Revoke Google API access at any time through your Google Account
+                settings
+              </li>
             </ul>
           </section>
 

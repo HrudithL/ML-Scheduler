@@ -136,7 +136,7 @@ export interface Database {
             columns: ["course_id"];
             referencedRelation: "courses";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
       task_events: {
@@ -194,7 +194,7 @@ export interface Database {
             columns: ["task_id"];
             referencedRelation: "tasks";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
       courses: {
@@ -330,7 +330,7 @@ export interface Database {
             columns: ["course_id"];
             referencedRelation: "courses";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
     };

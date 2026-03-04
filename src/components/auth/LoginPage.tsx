@@ -1,35 +1,41 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckSquare } from 'lucide-react'
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CheckSquare } from "lucide-react";
 
 export function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
-  const navigate = useNavigate()
+  const { user, loading, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Redirect if already logged in
     if (user && !loading) {
-      navigate('/', { replace: true })
+      navigate("/today", { replace: true });
     }
-  }, [user, loading, navigate])
+  }, [user, loading, navigate]);
 
   const handleSignIn = async () => {
     try {
-      await signInWithGoogle()
+      await signInWithGoogle();
     } catch (error) {
-      console.error('Failed to sign in:', error)
+      console.error("Failed to sign in:", error);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-slate-600">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -39,17 +45,13 @@ export function LoginPage() {
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
             <CheckSquare className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Productivity App</CardTitle>
+          <CardTitle className="text-3xl font-bold">ML Scheduler</CardTitle>
           <CardDescription className="text-base">
             Organize your tasks, track deadlines, and boost your productivity
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button
-            onClick={handleSignIn}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleSignIn} className="w-full" size="lg">
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
@@ -71,10 +73,17 @@ export function LoginPage() {
             Sign in with Google
           </Button>
           <p className="text-xs text-center text-slate-500">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            By signing in, you agree to our{" "}
+            <a href="/terms" className="underline hover:text-slate-700">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="underline hover:text-slate-700">
+              Privacy Policy
+            </a>
           </p>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
