@@ -10,11 +10,15 @@ import { CompletedView } from './components/views/CompletedView'
 import { CoursesView } from './components/views/CoursesView'
 import { DailyLogView } from './components/views/DailyLogView'
 import { DataExportView } from './components/views/DataExportView'
+import { PrivacyPolicyPage } from './components/views/PrivacyPolicyPage'
+import { TermsOfServicePage } from './components/views/TermsOfServicePage'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsOfServicePage />} />
       <Route
         path="/"
         element={
