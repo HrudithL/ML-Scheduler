@@ -1,10 +1,11 @@
 import { supabase } from "@/lib/supabase";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
 /**
  * GoogleCalendarService — Frontend service that calls Supabase Edge Functions
  * for Google Calendar & Tasks integration.
+ *
+ * Uses supabase.functions.invoke() which automatically handles auth headers
+ * and the apikey header required by Supabase's API gateway.
  */
 class GoogleCalendarService {
   private static instance: GoogleCalendarService;
@@ -20,16 +21,21 @@ class GoogleCalendarService {
   }
 
   /**
-   * Get the current access token for authenticated requests to edge functions
+   * Helper to invoke an edge function with proper error handling
    */
-  private async getAuthHeader(): Promise<string> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error("Not authenticated");
+  private async invoke(
+    functionName: string,
+    body?: Record<string, unknown>,
+  ): Promise<any> {
+    const { data, error } = await supabase.functions.invoke(functionName, {
+      body: body ?? {},
+    });
+
+    if (error) {
+      throw new Error(error.message || "Edge function call failed");
     }
-    return `Bearer ${session.access_token}`;
+
+    return data;
   }
 
   /**
@@ -37,18 +43,8 @@ class GoogleCalendarService {
    */
   async isConnected(): Promise<boolean> {
     try {
-      const auth = await this.getAuthHeader();
-      const res = await fetch(
-        `${SUPABASE_URL}/functions/v1/google-auth?action=status`,
-        {
-          headers: {
-            Authorization: auth,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const data = await res.json();
-      this._connected = data.connected === true;
+      const data = await this.invoke("google-auth", { action: "status" });
+      this._connected = data?.connected === true;
       return this._connected;
     } catch {
       this._connected = false;
@@ -67,21 +63,18 @@ class GoogleCalendarService {
    * Start the Google OAuth flow — redirects the user to Google consent screen
    */
   async connect(): Promise<void> {
-    const auth = await this.getAuthHeader();
     const redirectUri = `${window.location.origin}/auth/google/callback`;
 
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-auth?action=auth_url&redirect_uri=${encodeURIComponent(redirectUri)}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: auth,
-        },
-      },
-    );
+    const data = await this.invoke("google-auth", {
+      action: "auth_url",
+      redirect_uri: redirectUri,
+    });
 
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    if (!data?.url) {
+      throw new Error(
+        data?.error || "Failed to get Google authorization URL",
+      );
+    }
 
     // Redirect the user to Google consent screen
     window.location.href = data.url;
@@ -91,23 +84,15 @@ class GoogleCalendarService {
    * Exchange authorization code for tokens (called from OAuth callback page)
    */
   async exchangeCode(code: string): Promise<{ success: boolean }> {
-    const auth = await this.getAuthHeader();
     const redirectUri = `${window.location.origin}/auth/google/callback`;
 
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-auth?action=exchange`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code, redirect_uri: redirectUri }),
-      },
-    );
+    const data = await this.invoke("google-auth", {
+      action: "exchange",
+      code,
+      redirect_uri: redirectUri,
+    });
 
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    if (data?.error) throw new Error(data.error);
     this._connected = true;
     return { success: true };
   }
@@ -116,21 +101,8 @@ class GoogleCalendarService {
    * Disconnect Google Calendar integration
    */
   async disconnect(): Promise<void> {
-    const auth = await this.getAuthHeader();
-
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-auth?action=disconnect`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    const data = await this.invoke("google-auth", { action: "disconnect" });
+    if (data?.error) throw new Error(data.error);
     this._connected = false;
   }
 
@@ -144,21 +116,11 @@ class GoogleCalendarService {
     }
 
     try {
-      const auth = await this.getAuthHeader();
-      const res = await fetch(
-        `${SUPABASE_URL}/functions/v1/google-sync?action=sync_task`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: auth,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ task_id: taskId }),
-        },
-      );
-
-      const data = await res.json();
-      if (data.error) {
+      const data = await this.invoke("google-sync", {
+        action: "sync_task",
+        task_id: taskId,
+      });
+      if (data?.error) {
         console.error("Google sync error:", data.error);
       }
     } catch (err) {
@@ -176,18 +138,10 @@ class GoogleCalendarService {
     }
 
     try {
-      const auth = await this.getAuthHeader();
-      await fetch(
-        `${SUPABASE_URL}/functions/v1/google-sync?action=delete_sync`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: auth,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ task_id: taskId }),
-        },
-      );
+      await this.invoke("google-sync", {
+        action: "delete_sync",
+        task_id: taskId,
+      });
     } catch (err) {
       console.error("Failed to delete synced task from Google:", err);
     }
@@ -201,20 +155,8 @@ class GoogleCalendarService {
     total: number;
     errors: string[];
   }> {
-    const auth = await this.getAuthHeader();
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-sync?action=sync_all`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    const data = await this.invoke("google-sync", { action: "sync_all" });
+    if (data?.error) throw new Error(data.error);
     return { synced: data.synced, total: data.total, errors: data.errors };
   }
 
@@ -222,19 +164,10 @@ class GoogleCalendarService {
    * Pull changes from Google Calendar back into local tasks
    */
   async pullChanges(): Promise<{ changes: any[] }> {
-    const auth = await this.getAuthHeader();
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/google-sync?action=pull_changes`,
-      {
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    const data = await this.invoke("google-sync", {
+      action: "pull_changes",
+    });
+    if (data?.error) throw new Error(data.error);
     return { changes: data.changes };
   }
 }
