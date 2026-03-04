@@ -146,8 +146,8 @@ export function SettingsView() {
             Google Calendar & Tasks
           </CardTitle>
           <CardDescription>
-            Two-way sync your tasks with Google Calendar events and Google Tasks.
-            Changes on either platform are reflected on both.
+            Two-way sync your tasks with Google Calendar events and Google
+            Tasks. Changes on either platform are reflected on both.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -176,11 +176,7 @@ export function SettingsView() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={handleSyncAll}
-                  disabled={syncing}
-                  size="sm"
-                >
+                <Button onClick={handleSyncAll} disabled={syncing} size="sm">
                   {syncing ? (
                     <>
                       <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
