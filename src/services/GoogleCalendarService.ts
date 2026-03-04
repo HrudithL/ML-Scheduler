@@ -66,7 +66,7 @@ class GoogleCalendarService {
     const redirectUri = `${window.location.origin}/auth/google/callback`;
 
     const data = await this.invoke("google-auth", {
-      action: "auth_url",
+      action: "get_auth_url",
       redirect_uri: redirectUri,
     });
 
@@ -85,7 +85,7 @@ class GoogleCalendarService {
     const redirectUri = `${window.location.origin}/auth/google/callback`;
 
     const data = await this.invoke("google-auth", {
-      action: "exchange",
+      action: "exchange_code",
       code,
       redirect_uri: redirectUri,
     });
